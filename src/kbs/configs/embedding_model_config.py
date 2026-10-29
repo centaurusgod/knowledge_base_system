@@ -5,7 +5,7 @@ from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
-EMBEDDING_MODEL_NAME = "embed-gemma"
+EMBEDDING_MODEL_NAME = "Embedding-Gemma-300M-NPU2"
 
 
 @lru_cache(maxsize=1)

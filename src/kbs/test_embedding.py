@@ -10,7 +10,7 @@ client = OpenAI(
 )
 
 resp = client.embeddings.create(
-    model="embed-gemma",  # or "embed-gemma:300m"
+    model="Embedding-Gemma-300M-NPU2",
     input="Universe is singing a song, universe is dancing along, Universe is singing in a day like this",
 )
 

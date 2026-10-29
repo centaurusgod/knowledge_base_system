@@ -22,7 +22,7 @@ async def search_memory(query: str, recent: int = 3) -> str:
             response = await client.get(
                 SEARCH_MEMORY_ENDPOINT,
                 params={"query": query, "recent": recent},
-                timeout=10.0,
+                timeout=60.0,
             )
             response.raise_for_status()
             return json.dumps(response.json(), indent=2)
@@ -57,7 +57,7 @@ async def save_memory(
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
-                SAVE_MEMORY_ENDPOINT, json=payload, timeout=10.0
+                SAVE_MEMORY_ENDPOINT, json=payload, timeout=60.0
             )
             response.raise_for_status()
             return json.dumps(response.json(), indent=2)

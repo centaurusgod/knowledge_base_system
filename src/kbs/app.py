@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from fastapi import FastAPI, HTTPException, status
@@ -17,6 +18,9 @@ app = FastAPI()
 # Also support fetching n most recent memories, with a query string like /search-memory?recent=n
 @app.get("/search-memory")
 async def search_knowledge_base(query: str | None = None, recent: int = 2):
+    logger.info(
+        "Received request: endpoint=/search-memory query=%r recent=%d", query, recent
+    )
 
     if query is None:
         raise HTTPException(
@@ -25,10 +29,10 @@ async def search_knowledge_base(query: str | None = None, recent: int = 2):
         )
 
     try:
-        embeddings = text_to_embedding(query)
+        embeddings = await asyncio.to_thread(text_to_embedding, query)
 
-        results = search_chroma_collection(
-            query_embeddings=[embeddings], most_recent=recent
+        results = await asyncio.to_thread(
+            search_chroma_collection, query_embeddings=[embeddings], most_recent=recent
         )
 
         return results
@@ -42,6 +46,11 @@ async def search_knowledge_base(query: str | None = None, recent: int = 2):
 # It may also add an additional row to new infromation, but with new date
 @app.post("/add-memory", status_code=status.HTTP_201_CREATED)
 async def add_knowledge_base(memory: KnowledgeBaseTemplate):
+    logger.info(
+        "Received request: endpoint=/add-memory repository=%s tag=%s",
+        memory.repository_name,
+        memory.tag,
+    )
 
     searchable_text = (
         f"Tags: {memory.tag}\n"
@@ -51,9 +60,11 @@ async def add_knowledge_base(memory: KnowledgeBaseTemplate):
         f"Additional Context: {memory.new_information}"
     )
     try:
-        embeddings = text_to_embedding(searchable_text)
+        embeddings = await asyncio.to_thread(text_to_embedding, searchable_text)
 
-        existing = search_chroma_collection(query_embeddings=[embeddings], most_recent=1)
+        existing = await asyncio.to_thread(
+            search_chroma_collection, query_embeddings=[embeddings], most_recent=1
+        )
         
         if existing["results"]:
             top_match = existing["results"][0]
@@ -69,7 +80,8 @@ async def add_knowledge_base(memory: KnowledgeBaseTemplate):
         # Print first 5 elements of the embeddings for debugging
         logger.info(f"First 5 elements of embeddings: {embeddings[:5]}")
 
-        add_to_chroma_collection(
+        await asyncio.to_thread(
+            add_to_chroma_collection,
             embeddings=[embeddings],
             metadatas=[metadatas_dict],
             documents=[searchable_text],
